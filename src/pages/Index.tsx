@@ -114,6 +114,8 @@ const Index = () => {
     // Simulate saving process
     setTimeout(() => {
       setScriptData(validatedData);
+      // Сохраняем в localStorage для синхронизации с публичной страницей
+      localStorage.setItem('scriptData', JSON.stringify(validatedData));
       setIsEditing(false);
       setIsSaving(false);
       toast({
