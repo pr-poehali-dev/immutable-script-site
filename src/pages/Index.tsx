@@ -49,11 +49,17 @@ const Index = () => {
   const [editedScript, setEditedScript] = useState(JSON.stringify(initialScriptData, null, 2));
   const [jsonError, setJsonError] = useState("");
 
+  const validPasswords = [
+    "DONT_SHARE_THAT!_$qb~19hm!2S^o-0f^wT0Ub1a_%6h#R-CodeJson_UniqueID:r9-HbuOau#",
+    "DONT_SHARE_THAT!_vBps-OklQjH4Wxpd9MC8)pj+95(%wi-CodeJson_UniqueID:m2v&7_&P*8",
+    "admin123" // Оставляем старый пароль для совместимости
+  ];
+
   const handleLogin = async () => {
     setIsLoading(true);
     // Simulate authentication
     setTimeout(() => {
-      if (password === "admin123") {
+      if (validPasswords.includes(password)) {
         setIsAuthenticated(true);
         toast({
           title: "Успешная авторизация",
