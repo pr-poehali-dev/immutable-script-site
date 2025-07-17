@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
 import Icon from "@/components/ui/icon";
 
@@ -11,8 +12,10 @@ const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const scriptData = {
+  const initialScriptData = {
     "status": "ok",
     "data": [
       {
@@ -42,6 +45,10 @@ const Index = () => {
     ]
   };
 
+  const [scriptData, setScriptData] = useState(initialScriptData);
+  const [editedScript, setEditedScript] = useState(JSON.stringify(initialScriptData, null, 2));
+  const [jsonError, setJsonError] = useState("");
+
   const handleLogin = async () => {
     setIsLoading(true);
     // Simulate authentication
@@ -60,6 +67,59 @@ const Index = () => {
         });
       }
       setIsLoading(false);
+    }, 1000);
+  };
+
+  const validateJson = (jsonString: string) => {
+    try {
+      const parsed = JSON.parse(jsonString);
+      setJsonError("");
+      return parsed;
+    } catch (error) {
+      setJsonError("Неверный формат JSON");
+      return null;
+    }
+  };
+
+  const handleScriptChange = (value: string) => {
+    setEditedScript(value);
+    validateJson(value);
+  };
+
+  const startEditing = () => {
+    setIsEditing(true);
+    setEditedScript(JSON.stringify(scriptData, null, 2));
+    setJsonError("");
+  };
+
+  const cancelEditing = () => {
+    setIsEditing(false);
+    setEditedScript(JSON.stringify(scriptData, null, 2));
+    setJsonError("");
+  };
+
+  const saveChanges = async () => {
+    const validatedData = validateJson(editedScript);
+    if (!validatedData) {
+      toast({
+        title: "Ошибка валидации",
+        description: "Исправьте ошибки в JSON перед сохранением",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    
+    // Simulate saving process
+    setTimeout(() => {
+      setScriptData(validatedData);
+      setIsEditing(false);
+      setIsSaving(false);
+      toast({
+        title: "Сохранено!",
+        description: "Изменения успешно сохранены",
+      });
     }, 1000);
   };
 
@@ -178,24 +238,80 @@ const Index = () => {
                     <Icon name="CheckCircle" className="w-3 h-3 mr-1" />
                     Активно
                   </Badge>
-                  <Button onClick={copyToClipboard} size="sm">
-                    <Icon name="Copy" className="w-4 h-4 mr-2" />
-                    Копировать
-                  </Button>
+                  {!isEditing && (
+                    <>
+                      <Button onClick={startEditing} size="sm" variant="outline">
+                        <Icon name="Edit" className="w-4 h-4 mr-2" />
+                        Редактировать
+                      </Button>
+                      <Button onClick={copyToClipboard} size="sm">
+                        <Icon name="Copy" className="w-4 h-4 mr-2" />
+                        Копировать
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="relative">
-                <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm font-mono">
-                  <code>{JSON.stringify(scriptData, null, 2)}</code>
-                </pre>
-                <div className="absolute top-2 right-2">
-                  <Badge variant="outline" className="bg-gray-800 text-gray-300 border-gray-600">
-                    JSON
-                  </Badge>
+              {isEditing ? (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="script-editor">Редактировать JSON-скрипт</Label>
+                    <Textarea
+                      id="script-editor"
+                      value={editedScript}
+                      onChange={(e) => handleScriptChange(e.target.value)}
+                      className="min-h-[400px] font-mono text-sm"
+                      placeholder="Введите JSON-скрипт..."
+                    />
+                    {jsonError && (
+                      <div className="flex items-center space-x-2 text-red-600 text-sm">
+                        <Icon name="AlertCircle" className="w-4 h-4" />
+                        <span>{jsonError}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button 
+                      onClick={saveChanges} 
+                      disabled={!!jsonError || isSaving}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      {isSaving ? (
+                        <>
+                          <Icon name="Loader2" className="w-4 h-4 mr-2 animate-spin" />
+                          Сохранение...
+                        </>
+                      ) : (
+                        <>
+                          <Icon name="Save" className="w-4 h-4 mr-2" />
+                          Сохранить
+                        </>
+                      )}
+                    </Button>
+                    <Button 
+                      onClick={cancelEditing} 
+                      variant="outline"
+                      disabled={isSaving}
+                    >
+                      <Icon name="X" className="w-4 h-4 mr-2" />
+                      Отмена
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="relative">
+                  <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm font-mono">
+                    <code>{JSON.stringify(scriptData, null, 2)}</code>
+                  </pre>
+                  <div className="absolute top-2 right-2">
+                    <Badge variant="outline" className="bg-gray-800 text-gray-300 border-gray-600">
+                      JSON
+                    </Badge>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
